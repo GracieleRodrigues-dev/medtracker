@@ -1,16 +1,6 @@
-# medtracker
+# medtracker 💊⌚
 
-MedTracker is an app for managing medications, tracking treatment periods and doses, and sending reminders to ensure adherence.
+### MedTracker é um aplicativo para gerenciar medicamentos, monitorar períodos e doses de tratamento e enviar lembretes para garantir a adesão correta ao tratamento. O objetivo é melhorar a experiência do usuário ao manter registros precisos e organizados das medicações em uso.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+*MedTracker is an app for managing medications, tracking treatment periods and doses, and sending reminders to ensure adherence.
+The goal is to improve the user experience by keeping accurate and organized records of medications in use.*
