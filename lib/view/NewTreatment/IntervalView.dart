@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class IntervalWidget extends StatefulWidget {
-  const IntervalWidget({super.key});
+  final Function(Map<String, dynamic>) onIntervalChanged;
+  const IntervalWidget({required this.onIntervalChanged, super.key});
   @override
   State<IntervalWidget> createState() => _IntervalWidgetState();
 }
@@ -14,7 +15,22 @@ class _IntervalWidgetState extends State<IntervalWidget> {
   int _selectedInterval = 1; // Intervalo de hora ou dia
   int _dosage = 1;
 
-  // Função para abrir o picker de número (para horas ou dias)
+  @override
+  void initState() {
+    super.initState();
+    _intervalController.text =
+    '$_selectedInterval ${_selectedType.toLowerCase()}';
+  }
+
+  void _notifyParent() {
+    widget.onIntervalChanged({
+      'intervalType': _selectedType,
+      'intervalValue': _selectedInterval,
+      'startTime': _startController.text,
+      'dosage': _dosage,
+    });
+  }
+
   Future<void> _openNumberPicker(BuildContext context, String type) async {
     List<int> options = [];
 
@@ -52,6 +68,7 @@ class _IntervalWidgetState extends State<IntervalWidget> {
         _selectedInterval = selectedValue;
         _intervalController.text =
         '$_selectedInterval ${_selectedType.toLowerCase()}';
+        _notifyParent();
       });
     }
   }
@@ -73,6 +90,7 @@ class _IntervalWidgetState extends State<IntervalWidget> {
                     onPressed: () {
                       setStateDialog(() {
                         if (updatedDose > 0) updatedDose--;
+                        _notifyParent();
                       });
                     },
                   ),
@@ -82,6 +100,7 @@ class _IntervalWidgetState extends State<IntervalWidget> {
                     onPressed: () {
                       setStateDialog(() {
                         updatedDose++;
+                        _notifyParent();
                       });
                     },
                   ),
@@ -94,6 +113,7 @@ class _IntervalWidgetState extends State<IntervalWidget> {
               onPressed: () {
                 setState(() {
                   _dosage = updatedDose;
+                  _notifyParent();
                 });
                 Navigator.of(context).pop();
               },
@@ -105,12 +125,6 @@ class _IntervalWidgetState extends State<IntervalWidget> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _intervalController.text =
-    '$_selectedInterval ${_selectedType.toLowerCase()}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +143,8 @@ class _IntervalWidgetState extends State<IntervalWidget> {
               onChanged: (newValue) {
                 setState(() {
                   _selectedType = newValue!;
-                  _intervalController.text =
-                  '$_selectedInterval ${_selectedType.toLowerCase()}';
+                  _intervalController.text = '$_selectedInterval ${_selectedType.toLowerCase()}';
+                  _notifyParent();
                 });
               },
             ),
@@ -204,6 +218,7 @@ class _IntervalWidgetState extends State<IntervalWidget> {
       if (isStart) {
         _startController.text = timeString;
       }
+      _notifyParent();
     }
   }
 }

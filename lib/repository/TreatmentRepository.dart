@@ -1,52 +1,13 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'dart:async';
-
 import '../model/TreatmentModel.dart';
+import 'DAO.dart';
 
 class TreatmentRepository {
-  static final TreatmentRepository _instance = TreatmentRepository._internal();
-  factory TreatmentRepository() => _instance;
-
-  // Conexão com o banco de dados
-  static Database? _database;
-
-  // Constructor privado
-  TreatmentRepository._internal();
-
-  // Inicialização do banco de dados
-  Future<Database> get _db async {
-    if (_database != null) {
-      return _database!;
-    } else {
-      // Define o caminho do banco de dados
-      String path = join(await getDatabasesPath(), 'treatment_database.db');
-      _database = await openDatabase(
-        path,
-        onCreate: (db, version) {
-          return db.execute('''
-            CREATE TABLE treatments(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT,
-              dosage INTEGER,
-              form TEXT,
-              startDate TEXT,
-              endDate TEXT,
-              reminderType TEXT,
-              frequencyPerDay INTEGER,
-              specificDays TEXT
-            );
-          ''');
-        },
-        version: 1,
-      );
-      return _database!;
-    }
-  }
+  final DAO _db = DAO();
 
   // Inserir novo tratamento
   Future<int> insertTreatment(Treatment treatment) async {
-    final db = await _db;
+    final db = await _db.database;
     return await db.insert(
       'treatments',
       treatment.toMap(),
@@ -56,7 +17,7 @@ class TreatmentRepository {
 
   // Obter todos os tratamentos
   Future<List<Treatment>> getAllTreatments() async {
-    final db = await _db;
+    final db = await _db.database;
     final List<Map<String, dynamic>> maps = await db.query('treatments');
 
     return List.generate(maps.length, (i) {
@@ -66,7 +27,7 @@ class TreatmentRepository {
 
   // Obter tratamento pelo ID
   Future<Treatment?> getTreatmentById(int id) async {
-    final db = await _db;
+    final db = await _db.database;
     final List<Map<String, dynamic>> maps = await db.query(
       'treatments',
       where: 'id = ?',
@@ -82,7 +43,7 @@ class TreatmentRepository {
 
   // Atualizar tratamento
   Future<int> updateTreatment(Treatment treatment) async {
-    final db = await _db;
+    final db = await _db.database;
     return await db.update(
       'treatments',
       treatment.toMap(),
@@ -93,17 +54,11 @@ class TreatmentRepository {
 
   // Excluir tratamento
   Future<int> deleteTreatment(int id) async {
-    final db = await _db;
+    final db = await _db.database;
     return await db.delete(
       'treatments',
       where: 'id = ?',
       whereArgs: [id],
     );
-  }
-
-  // Fechar o banco de dados
-  Future<void> close() async {
-    final db = await _db;
-    await db.close();
   }
 }

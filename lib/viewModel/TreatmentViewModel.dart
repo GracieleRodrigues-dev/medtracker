@@ -18,8 +18,7 @@ class TreatmentViewModel extends EventViewModel {
     notify(LoadingEvent(isLoading: true));
     _repository.getAllTreatments().then((value) {
       notify(TreatmentLoadedEvent(treatments: value));
-      notify(
-          LoadingEvent(isLoading: false));
+      notify(LoadingEvent(isLoading: false));
     });
   }
 
@@ -32,21 +31,24 @@ class TreatmentViewModel extends EventViewModel {
       reminderType: treatmentData['reminderType'],
       frequencyPerDay: treatmentData['frequencyPerDay'],
       specificDays: treatmentData['specificDays'],
+      intervalType: treatmentData['intervalType'],
+      intervalValue: treatmentData['intervalValue'],
+      startTime: treatmentData['startTime']
     );
 
     final int id = await _repository.insertTreatment(treatment);
-
+    print('Tratamento salvo: ${treatment.toMap()}');
     notify(TreatmentCreatedEvent(treatment));
     loadTreatments();
     return id;
-
   }
 
   void deleteTreatment(int? id) {
     if (id == null) return;
-
     _repository.deleteTreatment(id).then((_) {
       _repository.getAllTreatments().then((treatments) {
+        print('Tratamento deletado: ID = $id');
+        notify(TreatmentDeletedEvent(id));
         notify(TreatmentLoadedEvent(treatments: treatments));
       });
     });
@@ -67,4 +69,8 @@ class TreatmentLoadedEvent extends ViewEvent {
 class TreatmentCreatedEvent extends ViewEvent {
   final Treatment treatment;
   TreatmentCreatedEvent(this.treatment) : super("TreatmentCreatedEvent");
+}
+class TreatmentDeletedEvent extends ViewEvent {
+  final int id;
+  TreatmentDeletedEvent(this.id) : super("TreatmentDeletedEvent");
 }

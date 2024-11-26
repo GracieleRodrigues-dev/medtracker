@@ -5,8 +5,11 @@ class Treatment {
   DateTime startDate;
   DateTime endDate;
   String reminderType; // 'Interval', 'MultiplesTimes', 'SpecificDays'
-  int frequencyPerDay; // Frequência em caso de lembrete "Interval" ou "MultiplesTimes"
+  int? frequencyPerDay; // Frequência em caso de lembrete "Interval" ou "MultiplesTimes"
   List<int>? specificDays; // Lista de índices dos dias selecionados (0 para domingo, 6 para sábado)
+  String? intervalType;
+  int? intervalValue;
+  String? startTime;
 
   Treatment({
     this.id,
@@ -15,8 +18,11 @@ class Treatment {
     required this.startDate,
     required this.endDate,
     required this.reminderType,
-    required this.frequencyPerDay,
+    this.frequencyPerDay,
     this.specificDays,
+    this.intervalType,
+    this.intervalValue,
+    this.startTime,
   });
 
   // Converter para um Map para utilizarmos no banco
@@ -30,6 +36,9 @@ class Treatment {
       'reminderType': reminderType,
       'frequencyPerDay': frequencyPerDay,
       'specificDays': specificDays != null ? specificDays!.join(',') : null,
+      'intervalType': intervalType,
+      'intervalValue':intervalValue,
+      'startTime': startTime,
     };
   }
 
@@ -46,6 +55,9 @@ class Treatment {
       specificDays: map['specificDays'] != null
           ? (map['specificDays'] as String).split(',').map((e) => int.parse(e)).toList()
           : null,
+      intervalType: map['intervalType'],
+      intervalValue: map['intervalValue'],
+      startTime: map['startTime'],
     );
   }
 }

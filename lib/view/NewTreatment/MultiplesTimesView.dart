@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class MultipleTimesWidget extends StatefulWidget {
-  const MultipleTimesWidget({super.key});
+  final Function(Map<String, dynamic>) onMultipleTimesChanged;
+  const MultipleTimesWidget({required this.onMultipleTimesChanged, super.key});
   @override
   State<MultipleTimesWidget> createState() => _MultipleTimesWidgetState();
 }
@@ -16,6 +17,16 @@ class _MultipleTimesWidgetState extends State<MultipleTimesWidget> {
   void initState() {
     super.initState();
     timesList = List.generate(numTimes, (index) => {'hora': TimeOfDay(hour: 8, minute: 0), 'dosagem': 1});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifyParent();
+    });
+  }
+
+  void _notifyParent() {
+    widget.onMultipleTimesChanged({
+      'frequencyPerDay': numTimes,
+      'timesList': timesList,
+    });
   }
 
   void updateTimes(int newNumTimes) {
@@ -100,6 +111,7 @@ class _MultipleTimesWidgetState extends State<MultipleTimesWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Quantas vezes ao dia?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
         DropdownButtonFormField<int>(
           value: numTimes,
           items: options.map((int value) {
@@ -111,10 +123,10 @@ class _MultipleTimesWidgetState extends State<MultipleTimesWidget> {
           onChanged: (value) {
             if (value != null) {
               updateTimes(value);
+              _notifyParent();
             }
           },
           decoration: InputDecoration(
-            labelText: 'Número de vezes ao dia',
             border: OutlineInputBorder(),
           ),
         ),

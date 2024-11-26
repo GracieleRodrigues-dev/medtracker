@@ -1,48 +1,52 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'dart:async';
-
 import '../model/TreatmentScheduleModel.dart';
+import 'DAO.dart';
 
 class TreatmentScheduleRepository {
-  static final TreatmentScheduleRepository _instance =
-  TreatmentScheduleRepository._internal();
+  final DAO _db = DAO();
 
-  factory TreatmentScheduleRepository() => _instance;
+  // Inserir novo agendamento
+  Future<int> insert(TreatmentSchedule schedule) async {
+    final db = await _db.database;
+    return await db.insert(
+      'schedules',
+      schedule.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
-  static Database? _database;
+  // Obter todos os agendamentos
+  Future<List<TreatmentSchedule>> getAll() async {
+    final db = await _db.database;
+    final List<Map<String, dynamic>> maps = await db.query('schedules');
 
-  TreatmentScheduleRepository._internal();
+    return List.generate(maps.length, (i) {
+      return TreatmentSchedule.fromMap(maps[i]);
+    });
+  }
 
-  Future<Database> get _db async {
-    if (_database != null) {
-      return _database!;
+  // Obter agendamento pelo ID
+  Future<TreatmentSchedule?> getById(int id) async {
+    final db = await _db.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'schedules',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (maps.isNotEmpty) {
+      return TreatmentSchedule.fromMap(maps.first);
     } else {
-      String path = join(await getDatabasesPath(), 'treatment_schedule.db');
-      _database = await openDatabase(
-        path,
-        onCreate: (db, version) {
-          // Criação das tabelas
-          return db.execute('''
-            CREATE TABLE schedules(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              treatmentId INTEGER,
-              scheduledTime DATETIME,
-              doseAmount INTEGER,
-              isTaken INTEGER,
-              takenTime TEXT,
-              FOREIGN KEY (treatmentId) REFERENCES treatments(id)
-            );
-          ''');
-        },
-        version: 1,
-      );
-      return _database!;
+      return null;
     }
   }
 
-  Future<List<Map<String, dynamic>>> getSchedules({bool? isTaken, DateTime? scheduledTime}) async {
-    final db = await _db;
+  // Obter agendamentos com filtros opcionais
+  Future<List<Map<String, dynamic>>> getSchedules({
+    bool? isTaken,
+    DateTime? scheduledTime,
+  }) async {
+    final db = await _db.database;
 
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -67,47 +71,13 @@ class TreatmentScheduleRepository {
     ON schedules.treatmentId = treatments.id
     ${whereClause.isNotEmpty ? 'WHERE $whereClause' : ''}
     ORDER BY datetime(schedules.scheduledTime) ASC
-  ''', whereArgs);
-
-    return result;  // Retorna a lista de mapas com o campo treatmentName
+    ''', whereArgs);
+    return result; // Retorna a lista de mapas com o campo treatmentName
   }
 
-
-  Future<int> insert(TreatmentSchedule schedule) async {
-    final db = await _db;
-    return await db.insert(
-      'schedules',
-      schedule.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  Future<List<TreatmentSchedule>> getAll() async {
-    final db = await _db;
-    final List<Map<String, dynamic>> maps = await db.query('schedules');
-
-    return List.generate(maps.length, (i) {
-      return TreatmentSchedule.fromMap(maps[i]);
-    });
-  }
-
-  Future<TreatmentSchedule?> getById(int id) async {
-    final db = await _db;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'schedules',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    if (maps.isNotEmpty) {
-      return TreatmentSchedule.fromMap(maps.first);
-    } else {
-      return null;
-    }
-  }
-
+  // Atualizar agendamento
   Future<int> update(TreatmentSchedule schedule) async {
-    final db = await _db;
+    final db = await _db.database;
     return await db.update(
       'schedules',
       schedule.toMap(),
@@ -116,20 +86,13 @@ class TreatmentScheduleRepository {
     );
   }
 
+  // Excluir agendamento
   Future<int> delete(int id) async {
-    final db = await _db;
+    final db = await _db.database;
     return await db.delete(
       'schedules',
       where: 'id = ?',
       whereArgs: [id],
     );
-  }
-
-
-
-
-  Future<void> close() async {
-    final db = await _db;
-    await db.close();
   }
 }

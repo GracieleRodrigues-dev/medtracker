@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
 class SpecificDaysWidget extends StatefulWidget {
-  const SpecificDaysWidget({super.key});
+  final Function(Map<String, dynamic>) onSpecificDaysChanged;
+  const SpecificDaysWidget({required this.onSpecificDaysChanged, super.key});
   @override
   State<SpecificDaysWidget> createState() => _SpecificDaysWidgetState();
 }
 
 class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
-  final List<bool> _selectedDays = List.generate(7, (index) => false);
-  TimeOfDay _selectedTime = TimeOfDay(hour: 8, minute: 0);  // Hora padrão 08:00
+  final List<int> _selectedDays = [];
+  TimeOfDay _selectedTime = TimeOfDay(hour: 8, minute: 0);
+  final TextEditingController _startController = TextEditingController();
   int _dosage = 1;
+
+  void _notifyParent() {
+    widget.onSpecificDaysChanged({
+      'specificDays': _selectedDays,
+      'dosage': _dosage,
+      'startTime': _startController.text,
+    });
+  }
 
   Future<void> pickTime() async {
     TimeOfDay? newTime = await showTimePicker(
@@ -61,6 +71,7 @@ class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
               onPressed: () {
                 setState(() {
                   _dosage = updatedDose;
+                  _notifyParent();
                 });
                 Navigator.of(context).pop();
               },
@@ -72,7 +83,6 @@ class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -83,10 +93,15 @@ class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
           children: List.generate(7, (index) {
             return ChoiceChip(
               label: Text(['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][index]),
-              selected: _selectedDays[index],
+              selected: _selectedDays.contains(index),
               onSelected: (selected) {
                 setState(() {
-                  _selectedDays[index] = selected;
+                  if (selected) {
+                    _selectedDays.add(index);
+                  } else {
+                    _selectedDays.remove(index);
+                  }
+                  _notifyParent();
                 });
               },
             );
@@ -94,7 +109,7 @@ class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
         ),
         SizedBox(height: 16),
 
-        if (_selectedDays.any((selected) => selected)) ...[
+        if (_selectedDays.isNotEmpty) ...[
           SizedBox(height: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,11 +128,41 @@ class _SpecificDaysWidgetState extends State<SpecificDaysWidget> {
                   ),
                 ],
               ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _startController,
+                      decoration: InputDecoration(
+                        labelText: 'Horário',
+                        border: OutlineInputBorder(),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectTime(context, true),
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(height: 16),
             ],
           ),
         ],
       ],
     );
+  }
+
+  void _selectTime(BuildContext context, bool isStart) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (selectedTime != null) {
+      final timeString = selectedTime.format(context);
+      if (isStart) {
+        _startController.text = timeString;
+      }
+      _notifyParent();
+    }
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/TreatmentModel.dart';
 import '../observer/observer.dart';
-import '../repository/TreatmentRepository.dart';
 import '../viewModel/TreatmentViewModel.dart';
 
 class TreatmentWidget extends StatefulWidget {
@@ -20,6 +19,10 @@ class _TreatmentWidgetState extends State<TreatmentWidget>
   final TreatmentViewModel _viewModel = TreatmentViewModel();
   bool _isLoading = false;
   List<Treatment> _treatments = [];
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
 
   @override
   void initState() {
@@ -42,34 +45,44 @@ class _TreatmentWidgetState extends State<TreatmentWidget>
         title: Text(widget.title),
       ),
       body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : ListView.builder(
-        itemCount: _treatments.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(_treatments[index].name),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    _editTreatment(_treatments[index]);
+          ? const Center(child: CircularProgressIndicator())
+          : _treatments.isEmpty
+              ? const Center(child: Text('Nenhum tratamento encontrado.'))
+              : ListView.builder(
+                  itemCount: _treatments.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      child: ListTile(
+                        title: Text(_treatments[index].name,
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                          'Início: ${_formatDate(_treatments[index].startDate)}',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              color: Theme.of(context).colorScheme.tertiary,
+                              onPressed: () {
+                                _deleteTreatment(_treatments[index]);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              color: Theme.of(context).colorScheme.tertiary,
+                              onPressed: () {
+                                _viewDetails(_treatments[index]);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    _deleteTreatment(_treatments[index]);
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 
@@ -83,12 +96,11 @@ class _TreatmentWidgetState extends State<TreatmentWidget>
       setState(() {
         _treatments = event.treatments;
       });
+    } else if (event is TreatmentDeletedEvent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tratamento excluído com sucesso!')),
+      );
     }
-  }
-
-  void _editTreatment(Treatment treatment) {
-    print('Editando tratamento: ${treatment.name}');
-    // Implementar...
   }
 
   void _deleteTreatment(Treatment treatment) {
@@ -111,6 +123,32 @@ class _TreatmentWidgetState extends State<TreatmentWidget>
               _viewModel.deleteTreatment(treatment.id);
             },
             child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _viewDetails(Treatment treatment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(treatment.name),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('ID: ${treatment.id}'),
+            Text('Tipo: ${treatment.form}'),
+            Text('Tipo de Lembrete: ${treatment.reminderType}'),
+            Text('Início: ${_formatDate(treatment.startDate)}'),
+            Text('Fim: ${_formatDate(treatment.endDate)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
           ),
         ],
       ),
